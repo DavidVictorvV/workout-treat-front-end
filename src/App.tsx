@@ -6,15 +6,15 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import AuthContainer from "./components/AuthContainer";
-import UserDashboard from "./components/UserDashboard";
-import HomePage from "./pages/HomePage";
-import DummyPage1 from "./pages/DummyPage1";
-import DummyPage2 from "./pages/DummyPage2";
-import PageNavigator from "./components/PageNavigator";
-import { GoogleSignInProvider } from "./contexts/GoogleSignInContext";
-import "./App.css";
-import type { User } from "./types/User";
+import AuthContainer from "@/components/Authentification/AuthContainer";
+import UserDashboard from "@/components/Authentification/UserDashboard";
+import HomePage from "@/pages/HomePage";
+import DummyPage1 from "@/pages/DummyPage1";
+import DummyPage2 from "@/pages/DummyPage2";
+import PageNavigator from "@/components/PageNavigator/PageNavigator";
+import { GoogleSignInProvider } from "@/contexts/GoogleSignInContext";
+import "@/App.css";
+import type { User } from "@/types/User";
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);

@@ -4,8 +4,8 @@ import React, {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { registerUser } from "../services/authService";
-import type { User } from "../types/User";
+import { registerUser } from "@/services/authService";
+import type { User } from "@/types/User";
 
 interface RegisterFormProps {
   isActive: boolean;

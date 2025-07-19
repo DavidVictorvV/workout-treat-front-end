@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import Logo from "./Logo";
-import AuthTabs from "./AuthTabs";
-import LoginForm from "./LoginForm";
-import RegisterForm from "./RegisterForm";
-import GoogleSignIn from "./GoogleSignIn";
-import Message from "./Message";
+import Logo from "@/components/Logo";
+import AuthTabs from "@/components/Authentification/AuthTabs";
+import LoginForm from "@/components/Authentification/LoginForm";
+import RegisterForm from "@/components/Authentification/RegisterForm";
+import GoogleSignIn from "@/components/Authentification/GoogleSignIn";
+import Message from "@/components/Message";
 
 interface MessageType {
   text: string;

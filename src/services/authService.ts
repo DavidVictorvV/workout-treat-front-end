@@ -1,5 +1,5 @@
 const API_BASE = "https://workout-treat-backend.netlify.app/.netlify/functions";
-import type { User } from "../types/User";
+import type { User } from "@/types/User";
 
 interface ApiErrorResponse {
   error?: string;

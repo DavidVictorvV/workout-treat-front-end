@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { loginUser } from "../services/authService";
-import type { User } from "../types/User";
+import { loginUser } from "@/services/authService";
+import type { User } from "@/types/User";
 
 interface LoginFormProps {
   isActive: boolean;

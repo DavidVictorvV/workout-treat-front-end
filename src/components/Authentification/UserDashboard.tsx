@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Logo from "./Logo";
-import Message from "./Message";
-import DeleteConfirmationModal from "./DeleteConfirmationModal";
-import { deleteAccount } from "../services/authService";
-import type { User } from "../types/User";
+import Logo from "@/components/Logo";
+import Message from "@/components/Message";
+import DeleteConfirmationModal from "@/components/Authentification/DeleteConfirmationModal";
+import { deleteAccount } from "@/services/authService";
+import type { User } from "@/types/User";
 
 interface UserDashboardProps {
   user: User;

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import { useGoogleSignIn } from "../contexts/GoogleSignInContext";
-import { googleSignIn } from "../services/authService";
-import type { User } from "../types/User";
+import { useGoogleSignIn } from "@/contexts/GoogleSignInContext";
+import { googleSignIn } from "@/services/authService";
+import type { User } from "@/types/User";
 
 interface GoogleSignInProps {
   onMessage: (text: string, type: "success" | "error" | "loading") => void;
