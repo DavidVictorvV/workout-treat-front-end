@@ -54,7 +54,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         localId: rawUserData.localId,
         displayName: rawUserData.displayName || "N/A",
         email: rawUserData.email,
-        idToken: "",
+        idToken: rawUserData.idToken,
       };
 
       onMessage("Account created successfully!", "success");
