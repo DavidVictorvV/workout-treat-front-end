@@ -1,6 +1,16 @@
 import React, { useState } from "react";
 
-const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
+interface DeleteConfirmationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+}
+
+const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+}) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleConfirm = async () => {
@@ -20,7 +30,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
     }
   };
 
-  const handleOverlayClick = (e) => {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       handleClose();
     }

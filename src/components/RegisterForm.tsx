@@ -1,15 +1,49 @@
-import React, { useState } from "react";
+import React, {
+  useState,
+  useEffect,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { registerUser } from "../services/authService";
 
-const RegisterForm = ({ isActive, onMessage, onUserLogin }) => {
-  const [formData, setFormData] = useState({
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  // add other user properties if needed
+}
+
+interface UserDataFromApi {
+  localId: string;
+  displayName?: string;
+  email: string;
+  // other props from the backend response
+}
+
+interface RegisterFormProps {
+  isActive: boolean;
+  onMessage: (text: string, type: "success" | "error" | "loading") => void;
+  onUserLogin: (userData: User) => void;
+}
+
+const RegisterForm: React.FC<RegisterFormProps> = ({
+  isActive,
+  onMessage,
+  onUserLogin,
+}) => {
+  const [formData, setFormData] = useState<{
+    displayName: string;
+    email: string;
+    password: string;
+  }>({
     displayName: "",
     email: "",
     password: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleInputChange = (e) => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -17,20 +51,27 @@ const RegisterForm = ({ isActive, onMessage, onUserLogin }) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     onMessage("Creating account...", "loading");
 
     try {
-      const userData = await registerUser(
+      const rawUserData: UserDataFromApi = await registerUser(
         formData.email,
         formData.password,
         formData.displayName
       );
+
+      const userData: User = {
+        id: rawUserData.localId,
+        name: rawUserData.displayName || "N/A",
+        email: rawUserData.email,
+      };
+
       onMessage("Account created successfully!", "success");
       onUserLogin(userData);
-    } catch (error) {
+    } catch (error: any) {
       onMessage(`Error: ${error.message}`, "error");
     } finally {
       setIsLoading(false);
@@ -46,7 +87,7 @@ const RegisterForm = ({ isActive, onMessage, onUserLogin }) => {
   };
 
   // Reset form when switching tabs
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isActive) {
       resetForm();
     }
@@ -88,7 +129,7 @@ const RegisterForm = ({ isActive, onMessage, onUserLogin }) => {
           value={formData.password}
           onChange={handleInputChange}
           required
-          minLength="6"
+          minLength={6}
           disabled={isLoading}
         />
       </div>

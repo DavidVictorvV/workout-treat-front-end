@@ -6,16 +6,25 @@ import RegisterForm from "./RegisterForm";
 import GoogleSignIn from "./GoogleSignIn";
 import Message from "./Message";
 
-const AuthContainer = ({ onUserLogin }) => {
-  const [activeTab, setActiveTab] = useState("login");
-  const [message, setMessage] = useState(null);
+interface MessageType {
+  text: string;
+  type: "success" | "error" | "loading" | "info";
+}
 
-  const handleTabSwitch = (tabName) => {
+interface AuthContainerProps {
+  onUserLogin: (userData: any) => void; // Replace `any` with your `User` type if available
+}
+
+const AuthContainer: React.FC<AuthContainerProps> = ({ onUserLogin }) => {
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const [message, setMessage] = useState<MessageType | null>(null);
+
+  const handleTabSwitch = (tabName: "login" | "register") => {
     setActiveTab(tabName);
-    setMessage(null);
+    clearMessage();
   };
 
-  const handleMessage = (text, type) => {
+  const handleMessage = (text: string, type: MessageType["type"]) => {
     setMessage({ text, type });
   };
 

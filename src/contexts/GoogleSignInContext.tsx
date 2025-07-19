@@ -1,8 +1,20 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
 
-const GoogleSignInContext = createContext();
+interface GoogleSignInContextType {
+  isGoogleLoaded: boolean;
+}
 
-export const useGoogleSignIn = () => {
+const GoogleSignInContext = createContext<GoogleSignInContextType | undefined>(
+  undefined
+);
+
+export const useGoogleSignIn = (): GoogleSignInContextType => {
   const context = useContext(GoogleSignInContext);
   if (!context) {
     throw new Error(
@@ -12,8 +24,14 @@ export const useGoogleSignIn = () => {
   return context;
 };
 
-export const GoogleSignInProvider = ({ children }) => {
-  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+interface GoogleSignInProviderProps {
+  children: ReactNode;
+}
+
+export const GoogleSignInProvider: React.FC<GoogleSignInProviderProps> = ({
+  children,
+}) => {
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     const checkGoogleLoaded = () => {

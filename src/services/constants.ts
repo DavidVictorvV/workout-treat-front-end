@@ -1,6 +1,7 @@
-export const GOOGLE_CLIENT_ID =
+export const GOOGLE_CLIENT_ID: string =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
   "932113529694-vlrs0j2ipbl8aioego28pt3m9h4ab36j.apps.googleusercontent.com";
-export const API_BASE_URL =
+
+export const API_BASE_URL: string =
   import.meta.env.VITE_API_BASE_URL ||
   "https://workout-treat-backend.netlify.app/.netlify/functions";

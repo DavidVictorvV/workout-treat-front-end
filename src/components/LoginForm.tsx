@@ -1,14 +1,40 @@
 import React, { useState } from "react";
 import { loginUser } from "../services/authService";
 
-const LoginForm = ({ isActive, onMessage, onUserLogin }) => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const [isLoading, setIsLoading] = useState(false);
+interface ApiUserData {
+  localId: string;
+  displayName?: string;
+  email: string;
+  // Add more backend fields if needed
+}
 
-  const handleInputChange = (e) => {
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  // Add more frontend user fields if needed
+}
+
+interface LoginFormProps {
+  isActive: boolean;
+  onMessage: (text: string, type: "success" | "error" | "loading") => void;
+  onUserLogin: (userData: User) => void;
+}
+
+const LoginForm: React.FC<LoginFormProps> = ({
+  isActive,
+  onMessage,
+  onUserLogin,
+}) => {
+  const [formData, setFormData] = useState<{ email: string; password: string }>(
+    {
+      email: "",
+      password: "",
+    }
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -16,16 +42,28 @@ const LoginForm = ({ isActive, onMessage, onUserLogin }) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     onMessage("Logging in...", "loading");
 
     try {
-      const userData = await loginUser(formData.email, formData.password);
+      // Get backend user data
+      const apiUserData: ApiUserData = await loginUser(
+        formData.email,
+        formData.password
+      );
+
+      // Map backend data to frontend User type
+      const userData: User = {
+        id: apiUserData.localId,
+        name: apiUserData.displayName || "",
+        email: apiUserData.email,
+      };
+
       onMessage("Login successful!", "success");
       onUserLogin(userData);
-    } catch (error) {
+    } catch (error: any) {
       onMessage(`Error: ${error.message}`, "error");
     } finally {
       setIsLoading(false);

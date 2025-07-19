@@ -4,10 +4,16 @@ import UserDashboard from "./components/UserDashboard";
 import { GoogleSignInProvider } from "./contexts/GoogleSignInContext";
 import "./App.css";
 
-function App() {
-  const [currentUser, setCurrentUser] = useState(null);
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
 
-  const handleUserLogin = (userData) => {
+function App() {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  const handleUserLogin = (userData: User) => {
     setCurrentUser(userData);
   };
 

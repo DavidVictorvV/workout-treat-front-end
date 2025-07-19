@@ -4,11 +4,34 @@ import Message from "./Message";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import { deleteAccount } from "../services/authService";
 
-const UserDashboard = ({ user, onLogout, onUserUpdate }) => {
-  const [message, setMessage] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+interface User {
+  email: string;
+  displayName?: string | null;
+  localId: string;
+  idToken: string;
+  // add other user properties if needed
+}
 
-  const handleMessage = (text, type) => {
+interface UserDashboardProps {
+  user: User;
+  onLogout: () => void;
+  onUserUpdate: (user: User) => void;
+}
+
+interface MessageType {
+  text: string;
+  type: "success" | "error" | "loading" | "info";
+}
+
+const UserDashboard: React.FC<UserDashboardProps> = ({
+  user,
+  onLogout,
+  onUserUpdate,
+}) => {
+  const [message, setMessage] = useState<MessageType | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+
+  const handleMessage = (text: string, type: MessageType["type"]) => {
     setMessage({ text, type });
   };
 
@@ -33,7 +56,7 @@ const UserDashboard = ({ user, onLogout, onUserUpdate }) => {
       setTimeout(() => {
         onLogout();
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       handleMessage(`Error deleting account: ${error.message}`, "error");
     }
   };

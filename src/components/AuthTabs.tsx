@@ -1,6 +1,11 @@
 import React from "react";
 
-const AuthTabs = ({ activeTab, onTabSwitch }) => {
+interface AuthTabsProps {
+  activeTab: "login" | "register";
+  onTabSwitch: (tab: "login" | "register") => void;
+}
+
+const AuthTabs: React.FC<AuthTabsProps> = ({ activeTab, onTabSwitch }) => {
   return (
     <div className="auth-tabs">
       <button
