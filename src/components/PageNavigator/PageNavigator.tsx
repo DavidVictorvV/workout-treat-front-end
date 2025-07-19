@@ -1,34 +1,28 @@
 import React from "react";
-import { Home, User, Folder, Settings } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { appPages } from "@/config/pages";
 import "./PageNavigator.css";
+import { PageIds } from "@/types/PageIds";
 
-interface PageNavigatorProps {
+interface Props {
   isLoggedIn: boolean;
+  currentPage: string;
+  onNavigate: (pageId: PageIds) => void;
 }
 
-const PageNavigator: React.FC<PageNavigatorProps> = ({ isLoggedIn }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-
+const PageNavigator: React.FC<Props> = ({
+  isLoggedIn,
+  currentPage,
+  onNavigate,
+}) => {
   if (!isLoggedIn) return null;
-
-  const pages = [
-    { path: "/home", label: "Home", icon: <Home size={20} /> },
-    { path: "/dummy1", label: "Page 1", icon: <Folder size={20} /> },
-    { path: "/dummy2", label: "Page 2", icon: <Settings size={20} /> },
-    { path: "/profile", label: "Profile", icon: <User size={20} /> },
-  ];
 
   return (
     <nav className="page-navigator">
-      {pages.map((page) => (
+      {appPages.map((page) => (
         <button
-          key={page.path}
-          className={`nav-btn ${
-            location.pathname === page.path ? "active" : ""
-          }`}
-          onClick={() => navigate(page.path)}
+          key={page.id}
+          className={`nav-btn ${currentPage === page.id ? "active" : ""}`}
+          onClick={() => onNavigate(page.id)}
         >
           {page.icon}
           <span>{page.label}</span>

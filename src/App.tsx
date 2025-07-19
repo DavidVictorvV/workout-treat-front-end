@@ -1,26 +1,21 @@
 import { useEffect, useState } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 
 import AuthContainer from "@/components/Authentification/AuthContainer";
-import UserDashboard from "@/components/Authentification/UserDashboard";
-import HomePage from "@/pages/HomePage";
-import DummyPage1 from "@/pages/DummyPage1";
-import DummyPage2 from "@/pages/DummyPage2";
 import PageNavigator from "@/components/PageNavigator/PageNavigator";
-
 import { GoogleSignInProvider } from "@/contexts/GoogleSignInContext";
+import MainAppRouter from "@/routes/MainAppRouter";
+
 import "./App.css";
 import type { User } from "@/types/User";
+import { PageIds } from "@/types/PageIds";
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState<PageIds>(PageIds.Home);
 
+  // Restore user session
   useEffect(() => {
     const storedUser = localStorage.getItem("loggedInUser");
     if (storedUser) {
@@ -38,14 +33,22 @@ function App() {
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state?.page) {
+        setCurrentPage(event.state.page);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem("loggedInUser");
     setCurrentUser(null);
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div>Loading...</div>;
 
   return (
     <GoogleSignInProvider>
@@ -54,24 +57,19 @@ function App() {
           <div className="app-background">
             {currentUser ? (
               <>
-                <Routes>
-                  {/* your routes */}
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/dummy1" element={<DummyPage1 />} />
-                  <Route path="/dummy2" element={<DummyPage2 />} />
-                  <Route
-                    path="/profile"
-                    element={
-                      <UserDashboard
-                        user={currentUser}
-                        onLogout={handleLogout}
-                        onUserUpdate={() => {}}
-                      />
-                    }
-                  />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-                <PageNavigator isLoggedIn={!!currentUser} />
+                <MainAppRouter
+                  currentPage={currentPage}
+                  currentUser={currentUser}
+                  onLogout={handleLogout}
+                />
+                <PageNavigator
+                  isLoggedIn={!!currentUser}
+                  currentPage={currentPage}
+                  onNavigate={(page) => {
+                    window.history.pushState({ page }, "", "/");
+                    setCurrentPage(page);
+                  }}
+                />
               </>
             ) : (
               <AuthContainer
