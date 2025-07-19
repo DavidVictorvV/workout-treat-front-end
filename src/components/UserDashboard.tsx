@@ -26,7 +26,7 @@ interface MessageType {
 const UserDashboard: React.FC<UserDashboardProps> = ({
   user,
   onLogout,
-  onUserUpdate,
+  // onUserUpdate,
 }) => {
   const [message, setMessage] = useState<MessageType | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);

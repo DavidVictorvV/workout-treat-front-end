@@ -18,6 +18,7 @@ function App() {
     setCurrentUser(userData);
   };
 
+  // Wrap setCurrentUser so its type matches (user: User) => void
   const handleUserUpdate = (user: User) => {
     setCurrentUser(user);
   };
