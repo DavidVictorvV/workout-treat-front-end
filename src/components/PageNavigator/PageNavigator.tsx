@@ -1,7 +1,7 @@
 import React from "react";
 import { Home, User, Folder, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "@/components/Authentification/PageNavigator.css";
+import "./PageNavigator.css";
 
 interface PageNavigatorProps {
   isLoggedIn: boolean;

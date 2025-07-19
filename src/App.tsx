@@ -12,8 +12,9 @@ import HomePage from "@/pages/HomePage";
 import DummyPage1 from "@/pages/DummyPage1";
 import DummyPage2 from "@/pages/DummyPage2";
 import PageNavigator from "@/components/PageNavigator/PageNavigator";
+
 import { GoogleSignInProvider } from "@/contexts/GoogleSignInContext";
-import "@/App.css";
+import "./App.css";
 import type { User } from "@/types/User";
 
 function App() {
