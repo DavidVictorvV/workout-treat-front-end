@@ -5,9 +5,10 @@ import { GoogleSignInProvider } from "./contexts/GoogleSignInContext";
 import "./App.css";
 
 interface User {
-  id: string;
-  name: string;
+  localId: string;
+  idToken: string;
   email: string;
+  displayName?: string | null;
 }
 
 function App() {
@@ -15,6 +16,10 @@ function App() {
 
   const handleUserLogin = (userData: User) => {
     setCurrentUser(userData);
+  };
+
+  const handleUserUpdate = (user: User) => {
+    setCurrentUser(user);
   };
 
   const handleUserLogout = () => {
@@ -29,7 +34,7 @@ function App() {
             <UserDashboard
               user={currentUser}
               onLogout={handleUserLogout}
-              onUserUpdate={setCurrentUser}
+              onUserUpdate={handleUserUpdate}
             />
           ) : (
             <AuthContainer onUserLogin={handleUserLogin} />
