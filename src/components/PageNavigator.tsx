@@ -15,9 +15,9 @@ const PageNavigator: React.FC<PageNavigatorProps> = ({ isLoggedIn }) => {
 
   const pages = [
     { path: "/home", label: "Home", icon: <Home size={20} /> },
+    { path: "/dummy1", label: "Page 1", icon: <Folder size={20} /> },
+    { path: "/dummy2", label: "Page 2", icon: <Settings size={20} /> },
     { path: "/profile", label: "Profile", icon: <User size={20} /> },
-    { path: "/page1", label: "Page 1", icon: <Folder size={20} /> },
-    { path: "/page2", label: "Page 2", icon: <Settings size={20} /> },
   ];
 
   return (

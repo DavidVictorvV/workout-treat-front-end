@@ -35,19 +35,19 @@ const LoginForm: React.FC<LoginFormProps> = ({
     onMessage("Logging in...", "loading");
 
     try {
-      // Get backend user data
       const apiUserData: User = await loginUser(
         formData.email,
         formData.password
       );
 
-      // Map backend data to frontend User type
       const userData: User = {
         localId: apiUserData.localId,
         displayName: apiUserData.displayName || "",
         email: apiUserData.email,
         idToken: apiUserData.idToken,
       };
+
+      localStorage.setItem("loggedInUser", JSON.stringify(userData));
 
       onMessage("Login successful!", "success");
       onUserLogin(userData);

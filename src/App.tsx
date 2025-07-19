@@ -5,19 +5,15 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebase/firebaseConfig";
 
 import AuthContainer from "./components/AuthContainer";
 import UserDashboard from "./components/UserDashboard";
-import PageNavigator from "./components/PageNavigator";
-
 import HomePage from "./pages/HomePage";
 import DummyPage1 from "./pages/DummyPage1";
 import DummyPage2 from "./pages/DummyPage2";
-import "./App.css";
+import PageNavigator from "./components/PageNavigator";
 import { GoogleSignInProvider } from "./contexts/GoogleSignInContext";
-
+import "./App.css";
 import type { User } from "./types/User";
 
 function App() {
@@ -25,34 +21,29 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const token = await firebaseUser.getIdToken();
-        setCurrentUser({
-          localId: firebaseUser.uid,
-          email: firebaseUser.email ?? "",
-          displayName: firebaseUser.displayName,
-          idToken: token,
-        });
-      } else {
-        setCurrentUser(null);
+    const storedUser = localStorage.getItem("loggedInUser");
+    if (storedUser) {
+      try {
+        const parsedUser: User = JSON.parse(storedUser);
+        console.log("Restored user from localStorage:", parsedUser.email);
+        setCurrentUser(parsedUser);
+      } catch (e) {
+        console.error("Failed to parse stored user", e);
+        localStorage.removeItem("loggedInUser");
       }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    } else {
+      console.log("No user found in localStorage");
+    }
+    setLoading(false);
   }, []);
 
-  const handleUserLogin = (userData: User) => {
-    setCurrentUser(userData);
-  };
-
-  const handleUserLogout = () => {
+  const handleLogout = () => {
+    localStorage.removeItem("loggedInUser");
     setCurrentUser(null);
   };
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return <div>Loading...</div>;
   }
 
   return (
@@ -60,32 +51,35 @@ function App() {
       <Router>
         <div className="app">
           <div className="app-background">
-            <Routes>
-              {!currentUser ? (
-                <Route
-                  path="*"
-                  element={<AuthContainer onUserLogin={handleUserLogin} />}
-                />
-              ) : (
-                <>
-                  <Route path="/" element={<Navigate to="/profile" />} />
+            {currentUser ? (
+              <>
+                <Routes>
+                  {/* your routes */}
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/dummy1" element={<DummyPage1 />} />
+                  <Route path="/dummy2" element={<DummyPage2 />} />
                   <Route
                     path="/profile"
                     element={
                       <UserDashboard
                         user={currentUser}
-                        onLogout={handleUserLogout}
+                        onLogout={handleLogout}
                         onUserUpdate={() => {}}
                       />
                     }
                   />
-                  <Route path="/home" element={<HomePage />} />
-                  <Route path="/page1" element={<DummyPage1 />} />
-                  <Route path="/page2" element={<DummyPage2 />} />
-                </>
-              )}
-            </Routes>
-            <PageNavigator isLoggedIn={!!currentUser} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+                <PageNavigator isLoggedIn={!!currentUser} />
+              </>
+            ) : (
+              <AuthContainer
+                onUserLogin={(user) => {
+                  setCurrentUser(user);
+                  localStorage.setItem("loggedInUser", JSON.stringify(user));
+                }}
+              />
+            )}
           </div>
         </div>
       </Router>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Logo from "./Logo";
 import Message from "./Message";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
@@ -29,6 +30,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
 
   const [message, setMessage] = useState<MessageType | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   const handleMessage = (text: string, type: MessageType["type"]) => {
     setMessage({ text, type });
@@ -41,6 +43,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
   const handleLogout = () => {
     clearMessage();
     onLogout();
+    navigate("/");
   };
 
   const handleDeleteAccount = async () => {
@@ -54,6 +57,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
 
       setTimeout(() => {
         onLogout();
+        navigate("/");
       }, 2000);
     } catch (error: any) {
       handleMessage(`Error deleting account: ${error.message}`, "error");
@@ -81,7 +85,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
           <div className="token">
             <strong>Firebase Token:</strong>
             <br />
-            {user.idToken ? user.idToken.substring(0, 50) + "..." : "N/A"}
+            {user.idToken?.substring(0, 50)}...
           </div>
           <div className="user-actions">
             <button className="logout-btn" onClick={handleLogout}>
