@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useGoogleSignIn } from "../contexts/GoogleSignInContext";
 import { googleSignIn } from "../services/authService";
+import type { User } from "../types/User";
 
 interface GoogleSignInProps {
   onMessage: (text: string, type: "success" | "error" | "loading") => void;
@@ -9,15 +10,6 @@ interface GoogleSignInProps {
 
 interface GoogleCredentialResponse {
   credential: string;
-}
-
-// Adjusted User interface to match your API response shape
-interface User {
-  localId: string;
-  displayName?: string;
-  email: string;
-  isNewUser?: boolean;
-  // add any other fields as needed
 }
 
 const GoogleSignIn: React.FC<GoogleSignInProps> = ({
@@ -38,6 +30,7 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
         displayName: userDataFromApi.displayName,
         email: userDataFromApi.email,
         isNewUser: userDataFromApi.isNewUser,
+        idToken: userDataFromApi.idToken,
       };
 
       const message = userData.isNewUser

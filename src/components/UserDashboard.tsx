@@ -3,14 +3,7 @@ import Logo from "./Logo";
 import Message from "./Message";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import { deleteAccount } from "../services/authService";
-
-interface User {
-  email: string;
-  displayName?: string | null;
-  localId: string;
-  idToken: string;
-  // add other user properties if needed
-}
+import type { User } from "../types/User";
 
 interface UserDashboardProps {
   user: User;
@@ -26,8 +19,14 @@ interface MessageType {
 const UserDashboard: React.FC<UserDashboardProps> = ({
   user,
   onLogout,
-  // onUserUpdate,
+  onUserUpdate,
 }) => {
+  // Silence unused onUserUpdate prop warning:
+  React.useEffect(() => {
+    // intentionally do nothing but silence the unused prop
+    void onUserUpdate;
+  }, [onUserUpdate]);
+
   const [message, setMessage] = useState<MessageType | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
@@ -82,7 +81,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
           <div className="token">
             <strong>Firebase Token:</strong>
             <br />
-            {user.idToken.substring(0, 50)}...
+            {user.idToken ? user.idToken.substring(0, 50) + "..." : "N/A"}
           </div>
           <div className="user-actions">
             <button className="logout-btn" onClick={handleLogout}>

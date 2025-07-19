@@ -5,20 +5,7 @@ import React, {
   type FormEvent,
 } from "react";
 import { registerUser } from "../services/authService";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  // add other user properties if needed
-}
-
-interface UserDataFromApi {
-  localId: string;
-  displayName?: string;
-  email: string;
-  // other props from the backend response
-}
+import type { User } from "../types/User";
 
 interface RegisterFormProps {
   isActive: boolean;
@@ -57,16 +44,17 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     onMessage("Creating account...", "loading");
 
     try {
-      const rawUserData: UserDataFromApi = await registerUser(
+      const rawUserData: User = await registerUser(
         formData.email,
         formData.password,
         formData.displayName
       );
 
       const userData: User = {
-        id: rawUserData.localId,
-        name: rawUserData.displayName || "N/A",
+        localId: rawUserData.localId,
+        displayName: rawUserData.displayName || "N/A",
         email: rawUserData.email,
+        idToken: "",
       };
 
       onMessage("Account created successfully!", "success");

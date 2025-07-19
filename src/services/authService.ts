@@ -1,13 +1,5 @@
 const API_BASE = "https://workout-treat-backend.netlify.app/.netlify/functions";
-
-interface UserData {
-  localId: string;
-  idToken: string;
-  email: string;
-  displayName?: string;
-  isNewUser?: boolean;
-  // add any other fields you expect here
-}
+import type { User } from "../types/User";
 
 interface ApiErrorResponse {
   error?: string;
@@ -16,14 +8,14 @@ interface ApiErrorResponse {
 export const loginUser = async (
   email: string,
   password: string
-): Promise<UserData> => {
+): Promise<User> => {
   const response = await fetch(`${API_BASE}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
 
-  const data: UserData & ApiErrorResponse = await response.json();
+  const data: User & ApiErrorResponse = await response.json();
 
   if (!response.ok) {
     throw new Error(data.error || "Login failed");
@@ -36,14 +28,14 @@ export const registerUser = async (
   email: string,
   password: string,
   displayName: string
-): Promise<UserData> => {
+): Promise<User> => {
   const response = await fetch(`${API_BASE}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password, displayName }),
   });
 
-  const data: UserData & ApiErrorResponse = await response.json();
+  const data: User & ApiErrorResponse = await response.json();
 
   if (!response.ok) {
     throw new Error(data.error || "Registration failed");
@@ -52,14 +44,14 @@ export const registerUser = async (
   return data;
 };
 
-export const googleSignIn = async (idToken: string): Promise<UserData> => {
+export const googleSignIn = async (idToken: string): Promise<User> => {
   const response = await fetch(`${API_BASE}/google-signin`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ idToken }),
   });
 
-  const data: UserData & ApiErrorResponse = await response.json();
+  const data: User & ApiErrorResponse = await response.json();
 
   if (!response.ok) {
     throw new Error(data.error || "Google sign-in failed");

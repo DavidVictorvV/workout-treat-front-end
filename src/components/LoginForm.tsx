@@ -1,19 +1,6 @@
 import React, { useState } from "react";
 import { loginUser } from "../services/authService";
-
-interface ApiUserData {
-  localId: string;
-  displayName?: string;
-  email: string;
-  // Add more backend fields if needed
-}
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  // Add more frontend user fields if needed
-}
+import type { User } from "../types/User";
 
 interface LoginFormProps {
   isActive: boolean;
@@ -49,16 +36,17 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
     try {
       // Get backend user data
-      const apiUserData: ApiUserData = await loginUser(
+      const apiUserData: User = await loginUser(
         formData.email,
         formData.password
       );
 
       // Map backend data to frontend User type
       const userData: User = {
-        id: apiUserData.localId,
-        name: apiUserData.displayName || "",
+        localId: apiUserData.localId,
+        displayName: apiUserData.displayName || "",
         email: apiUserData.email,
+        idToken: apiUserData.idToken,
       };
 
       onMessage("Login successful!", "success");
