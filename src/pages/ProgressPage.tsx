@@ -1,41 +1,20 @@
 import React from "react";
 import { Star, Dumbbell, Trophy, Target } from "lucide-react";
+import PageLayout from "@/components/PageLayout";
+import StatsCard from "@/components/StatsCard";
+import { usePoints } from "@/hooks/usePoints";
 
 const ProgressPage: React.FC = () => {
-  // Sample data - in a real app this would come from state/API
-  const currentPoints = 300;
-  const workoutsToday = 0;
-  const totalEarned = 300;
+  const { totalPoints, completedWorkouts } = usePoints();
+  
+  const currentPoints = totalPoints;
+  const workoutsToday = completedWorkouts.length;
+  const totalEarned = totalPoints;
   const weeklyGoal = 7;
-  const weeklyProgress = 0;
+  const weeklyProgress = Math.min(workoutsToday, weeklyGoal);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
-                <Dumbbell className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-lg text-white">FitPoints</h1>
-            </div>
-            <div className="flex items-center bg-slate-800/80 rounded-full px-4 py-2 space-x-2">
-              <div className="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">★</span>
-              </div>
-              <span className="text-amber-400 text-lg">{currentPoints}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Main Content */}
-      <div className="pb-24 px-4">
-        <div className="py-6">
-          <h2 className="text-2xl text-white mb-6">Statistics</h2>
-          <div className="space-y-6">
+    <PageLayout points={currentPoints} title="Statistics">
             {/* Weekly Progress Card */}
             <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
               <h3 className="text-xl font-semibold mb-4">Weekly Progress</h3>
@@ -56,35 +35,35 @@ const ProgressPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-4">
-              {/* Current Points */}
-              <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 text-center">
-                <Star className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-                <div className="text-3xl font-bold text-amber-400 mb-1">{currentPoints}</div>
-                <div className="text-sm text-slate-400">Current Points</div>
-              </div>
-
-              {/* Workouts Today */}
-              <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 text-center">
-                <Dumbbell className="w-10 h-10 text-blue-400 mx-auto mb-3" />
-                <div className="text-3xl font-bold text-blue-400 mb-1">{workoutsToday}</div>
-                <div className="text-sm text-slate-400">Workouts Today</div>
-              </div>
-
-              {/* Total Earned */}
-              <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 text-center">
-                <Trophy className="w-10 h-10 text-green-400 mx-auto mb-3" />
-                <div className="text-3xl font-bold text-green-400 mb-1">{totalEarned}</div>
-                <div className="text-sm text-slate-400">Total Earned</div>
-              </div>
-
-              {/* Weekly Goal */}
-              <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 text-center">
-                <Target className="w-10 h-10 text-orange-400 mx-auto mb-3" />
-                <div className="text-3xl font-bold text-orange-400 mb-1">{weeklyProgress}/{weeklyGoal}</div>
-                <div className="text-sm text-slate-400">Weekly Goal</div>
-              </div>
+              <StatsCard
+                icon={Star}
+                value={currentPoints}
+                label="Current Points"
+                iconColor="text-amber-400"
+                valueColor="text-amber-400"
+              />
+              <StatsCard
+                icon={Dumbbell}
+                value={workoutsToday}
+                label="Workouts Today"
+                iconColor="text-blue-400"
+                valueColor="text-blue-400"
+              />
+              <StatsCard
+                icon={Trophy}
+                value={totalEarned}
+                label="Total Earned"
+                iconColor="text-green-400"
+                valueColor="text-green-400"
+              />
+              <StatsCard
+                icon={Target}
+                value={`${weeklyProgress}/${weeklyGoal}`}
+                label="Weekly Goal"
+                iconColor="text-orange-400"
+                valueColor="text-orange-400"
+              />
             </div>
 
             {/* Recent Achievements */}
@@ -109,10 +88,7 @@ const ProgressPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </PageLayout>
   );
 };
 

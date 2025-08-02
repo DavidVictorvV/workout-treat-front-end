@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import { Dumbbell } from "lucide-react";
+import PageLayout from "@/components/PageLayout";
+import FilterTabs from "@/components/FilterTabs";
+import Button from "@/components/Button";
+import Toast from "@/components/Toast";
+import { usePoints } from "@/hooks/usePoints";
 
 interface StoreItem {
   id: string;
@@ -99,50 +103,31 @@ type FilterCategory = "all" | "canAfford" | "drinks";
 
 const StorePage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterCategory>("all");
-  const [availablePoints] = useState(300);
-  const [purchasedItems, setPurchasedItems] = useState<Set<string>>(new Set());
+  const [toastState, setToastState] = useState<{show: boolean, message: string}>(
+    {show: false, message: ''}
+  );
+  const { totalPoints: availablePoints, purchaseItem, isItemPurchased } = usePoints();
 
   const filteredItems = storeItems.filter(item => {
     if (activeFilter === "all") return true;
-    if (activeFilter === "canAfford") return item.price <= availablePoints && item.available;
+    if (activeFilter === "canAfford") return item.price <= availablePoints && item.available && !isItemPurchased(item.id);
     return item.category === activeFilter;
   });
 
   const handlePurchase = (itemId: string, itemPrice: number) => {
-    if (availablePoints >= itemPrice) {
-      setPurchasedItems(prev => new Set([...prev, itemId]));
+    if (purchaseItem(itemId, itemPrice)) {
+      const item = storeItems.find(i => i.id === itemId);
+      setToastState({
+        show: true,
+        message: `Purchased ${item?.name || 'item'} successfully!`
+      });
     }
   };
 
   const canAfford = (price: number) => availablePoints >= price;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
-                <Dumbbell className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-lg text-white">FitPoints</h1>
-            </div>
-            <div className="flex items-center bg-slate-800/80 rounded-full px-4 py-2 space-x-2">
-              <div className="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">★</span>
-              </div>
-              <span className="text-amber-400 text-lg">{availablePoints}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Main Content */}
-      <div className="pb-24 px-4">
-        <div className="py-6">
-          <h2 className="text-2xl text-white mb-6">Rewards Store</h2>
-          <div className="space-y-6">
+    <PageLayout points={availablePoints} title="Rewards Store">
             {/* Points Available Card */}
             <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 text-center">
               <div className="text-4xl font-bold text-amber-400 mb-2">{availablePoints}</div>
@@ -150,44 +135,20 @@ const StorePage: React.FC = () => {
               <div className="text-sm text-slate-400">Spend wisely on rewards!</div>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setActiveFilter("all")}
-                className={`flex-1 h-12 rounded-xl transition-all duration-200 px-4 py-2 ${
-                  activeFilter === "all"
-                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg"
-                    : "bg-slate-800/50 text-slate-300 hover:bg-slate-700/50"
-                }`}
-              >
-                All Items
-              </button>
-              <button
-                onClick={() => setActiveFilter("canAfford")}
-                className={`flex-1 h-12 rounded-xl transition-all duration-200 px-4 py-2 ${
-                  activeFilter === "canAfford"
-                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg"
-                    : "bg-slate-800/50 text-slate-300 hover:bg-slate-700/50"
-                }`}
-              >
-                Can Afford
-              </button>
-              <button
-                onClick={() => setActiveFilter("drinks")}
-                className={`flex-1 h-12 rounded-xl transition-all duration-200 px-4 py-2 ${
-                  activeFilter === "drinks"
-                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg"
-                    : "bg-slate-800/50 text-slate-300 hover:bg-slate-700/50"
-                }`}
-              >
-                Drinks
-              </button>
-            </div>
+            <FilterTabs
+              tabs={[
+                { key: "all", label: "All Items" },
+                { key: "canAfford", label: "Can Afford" },
+                { key: "drinks", label: "Drinks" }
+              ]}
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+            />
 
             {/* Store Items Grid */}
             <div className="grid grid-cols-2 gap-4">
               {filteredItems.map((item) => {
-                const isPurchased = purchasedItems.has(item.id);
+                const isPurchased = isItemPurchased(item.id);
                 const isAffordable = canAfford(item.price);
                 const isAvailable = item.available;
                 
@@ -218,27 +179,29 @@ const StorePage: React.FC = () => {
                           Purchased
                         </div>
                       ) : (
-                        <button
+                        <Button
                           onClick={() => handlePurchase(item.id, item.price)}
                           disabled={!isAffordable}
-                          className={`w-full px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                            isAffordable
-                              ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:shadow-lg hover:scale-105"
-                              : "bg-slate-600 text-slate-400 cursor-not-allowed"
-                          }`}
+                          variant={isAffordable ? "primary" : "disabled"}
+                          fullWidth
+                          size="md"
+                          className="px-4 py-3"
                         >
                           {item.price} points
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      
+      <Toast
+        show={toastState.show}
+        message={toastState.message}
+        onClose={() => setToastState({show: false, message: ''})}
+      />
+    </PageLayout>
   );
 };
 

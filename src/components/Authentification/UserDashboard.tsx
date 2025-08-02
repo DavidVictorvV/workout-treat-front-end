@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User as UserIcon, Dumbbell, Flame, Heart, Bell, Target, Shield, FileText, ChevronRight } from "lucide-react";
+import { User as UserIcon, Flame, Heart, Bell, Target, Shield, FileText, ChevronRight } from "lucide-react";
 import DeleteConfirmationModal from "@/components/Authentification/DeleteConfirmationModal";
 import { deleteAccount } from "@/services/authService";
 import type { User } from "@/types/User";
+import PageLayout from "@/components/PageLayout";
+import StatsCard from "@/components/StatsCard";
+import Button from "@/components/Button";
+import { usePoints } from "@/hooks/usePoints";
 
 interface UserDashboardProps {
   user: User;
@@ -24,6 +28,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
 
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const navigate = useNavigate();
+  const { totalPoints, completedWorkouts } = usePoints();
 
   const handleLogout = () => {
     onLogout();
@@ -43,37 +48,13 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
     }
   };
 
-  // Sample user stats
-  const dayStreak = 3;
+  // User stats based on actual data
+  const dayStreak = completedWorkouts.length;
   const favoriteExercise = "Running";
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-        {/* Sticky Header */}
-        <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
-                  <Dumbbell className="w-5 h-5 text-white" />
-                </div>
-                <h1 className="text-lg text-white">FitPoints</h1>
-              </div>
-              <div className="flex items-center bg-slate-800/80 rounded-full px-4 py-2 space-x-2">
-                <div className="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">★</span>
-                </div>
-                <span className="text-amber-400 text-lg">300</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="pb-24 px-4">
-          <div className="py-6">
-            <h2 className="text-2xl text-white mb-6">Profile</h2>
+      <PageLayout points={totalPoints} title="Profile">
 
             {/* User Profile Card */}
             <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 mb-6">
@@ -89,19 +70,21 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
               </div>
             </div>
 
-            {/* Stats Cards */}
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 text-center">
-                <Flame className="w-10 h-10 text-orange-400 mx-auto mb-3" />
-                <div className="text-3xl font-bold text-orange-400 mb-1">{dayStreak}</div>
-                <div className="text-sm text-slate-400">Day Streak</div>
-              </div>
-              
-              <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 text-center">
-                <Heart className="w-10 h-10 text-red-400 mx-auto mb-3" />
-                <div className="text-lg font-bold text-red-400 mb-1">{favoriteExercise}</div>
-                <div className="text-sm text-slate-400">Favorite</div>
-              </div>
+              <StatsCard
+                icon={Flame}
+                value={dayStreak}
+                label="Day Streak"
+                iconColor="text-orange-400"
+                valueColor="text-orange-400"
+              />
+              <StatsCard
+                icon={Heart}
+                value={favoriteExercise}
+                label="Favorite"
+                iconColor="text-red-400"
+                valueColor="text-red-400"
+              />
             </div>
 
             {/* Settings Section */}
@@ -170,23 +153,25 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
                 <p className="text-white font-medium break-all">{user.email}</p>
               </div>
               
-              <button
+              <Button
                 onClick={handleLogout}
-                className="w-full bg-gradient-to-r from-amber-400 to-orange-500 hover:shadow-lg hover:scale-105 text-white font-medium py-4 px-6 rounded-xl transition-all duration-200"
+                variant="primary"
+                fullWidth
+                size="lg"
               >
                 Sign Out
-              </button>
+              </Button>
               
-              <button
+              <Button
                 onClick={() => setShowDeleteModal(true)}
-                className="w-full bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 font-medium py-4 px-6 rounded-xl transition-colors"
+                variant="danger"
+                fullWidth
+                size="lg"
               >
                 Delete Account
-              </button>
+              </Button>
             </div>
-          </div>
-        </div>
-      </div>
+      </PageLayout>
 
       <DeleteConfirmationModal
         isOpen={showDeleteModal}

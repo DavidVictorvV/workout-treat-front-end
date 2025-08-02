@@ -1,16 +1,9 @@
 import React, { useState } from "react";
-import {
-  User,
-  Play,
-  Dumbbell,
-  Timer,
-  Target,
-  Mountain,
-  Activity,
-  Zap,
-  Bike,
-  Trophy,
-} from "lucide-react";
+import PageLayout from "@/components/PageLayout";
+import FilterTabs from "@/components/FilterTabs";
+import Button from "@/components/Button";
+import Toast from "@/components/Toast";
+import { usePoints } from "@/hooks/usePoints";
 
 interface Workout {
   id: string;
@@ -116,10 +109,10 @@ type FilterCategory = "all" | "outdoor" | "indoor";
 
 const HomePage: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterCategory>("all");
-  const [totalPoints] = useState(300);
-  const [completedWorkouts, setCompletedWorkouts] = useState<Set<string>>(
-    new Set()
+  const [toastState, setToastState] = useState<{show: boolean, message: string, points?: number}>(
+    {show: false, message: '', points: 0}
   );
+  const { totalPoints, completeWorkout, isWorkoutCompleted } = usePoints();
 
   const filteredWorkouts = workouts.filter((workout) => {
     if (activeFilter === "all") return true;
@@ -127,85 +120,38 @@ const HomePage: React.FC = () => {
   });
 
   const handleStartWorkout = (workoutId: string) => {
-    setCompletedWorkouts((prev) => new Set([...prev, workoutId]));
+    const workout = workouts.find(w => w.id === workoutId);
+    if (workout && completeWorkout(workoutId, workout.points)) {
+      setToastState({
+        show: true,
+        message: 'Workout completed!',
+        points: workout.points
+      });
+    }
   };
 
-  const todayWorkouts = completedWorkouts.size;
-  const todayPoints = Array.from(completedWorkouts).reduce(
-    (total, workoutId) => {
-      const workout = workouts.find((w) => w.id === workoutId);
-      return total + (workout?.points || 0);
-    },
-    0
-  );
+  const completedWorkoutsToday = workouts.filter(w => isWorkoutCompleted(w.id));
+  const todayWorkouts = completedWorkoutsToday.length;
+  const todayPoints = completedWorkoutsToday.reduce((total, workout) => total + workout.points, 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-      {/* Sticky Header */}
-      <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
-                <Dumbbell className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-lg text-white">FitPoints</h1>
-            </div>
-            <div className="flex items-center bg-slate-800/80 rounded-full px-4 py-2 space-x-2">
-              <div className="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">★</span>
-              </div>
-              <span className="text-amber-400 text-lg">{totalPoints}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="pb-24 px-4">
-        <div className="py-6">
-          <h2 className="text-2xl text-white mb-6">Workouts</h2>
-          <div className="space-y-6">
-            {/* Filter Tabs */}
-            <div className="flex gap-3">
-              <button
-                onClick={() => setActiveFilter("all")}
-                className={`flex-1 h-12 rounded-xl transition-all duration-200 px-4 py-2 ${
-                  activeFilter === "all"
-                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg"
-                    : "bg-slate-800/50 text-slate-300 hover:bg-slate-700/50"
-                }`}
-              >
-                All Workouts
-              </button>
-              <button
-                onClick={() => setActiveFilter("outdoor")}
-                className={`flex-1 h-12 rounded-xl transition-all duration-200 px-4 py-2 ${
-                  activeFilter === "outdoor"
-                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg"
-                    : "bg-slate-800/50 text-slate-300 hover:bg-slate-700/50"
-                }`}
-              >
-                Outdoor
-              </button>
-              <button
-                onClick={() => setActiveFilter("indoor")}
-                className={`flex-1 h-12 rounded-xl transition-all duration-200 px-4 py-2 ${
-                  activeFilter === "indoor"
-                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg"
-                    : "bg-slate-800/50 text-slate-300 hover:bg-slate-700/50"
-                }`}
-              >
-                Indoor
-              </button>
-            </div>
+    <PageLayout points={totalPoints} title="Workouts">
+            <FilterTabs
+              tabs={[
+                { key: "all", label: "All Workouts" },
+                { key: "outdoor", label: "Outdoor" },
+                { key: "indoor", label: "Indoor" }
+              ]}
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+            />
 
             {/* Workouts List */}
             <div className="space-y-3">
               {filteredWorkouts.map((workout) => (
                 <div
                   key={workout.id}
-                  className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border transition-all duration-200 border-slate-700/50 hover:border-slate-600/50"
+                  className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-4 border transition-all duration-200 border-slate-700/50 hover:border-slate-600/50"
                 >
                   <div className="flex items-center gap-8">
                     <div className="text-3xl">{workout.icon}</div>
@@ -220,18 +166,16 @@ const HomePage: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="m-4">
-                      <button
+                    <div>
+                      <Button
                         onClick={() => handleStartWorkout(workout.id)}
-                        disabled={completedWorkouts.has(workout.id)}
-                        className={`h-12 px-8 min-w-[100px] rounded-xl transition-all duration-200 font-semibold ${
-                          completedWorkouts.has(workout.id)
-                            ? "bg-green-600 text-white cursor-not-allowed"
-                            : "bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:shadow-lg hover:scale-105"
-                        }`}
+                        disabled={isWorkoutCompleted(workout.id)}
+                        variant={isWorkoutCompleted(workout.id) ? "success" : "primary"}
+                        size="md"
+                        className="h-12 px-8 min-w-[100px]"
                       >
-                        {completedWorkouts.has(workout.id) ? "Done" : "Start"}
-                      </button>
+                        {isWorkoutCompleted(workout.id) ? "Done" : "Start"}
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -252,10 +196,14 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      </div>
-    </div>
+      
+      <Toast
+        show={toastState.show}
+        message={toastState.message}
+        points={toastState.points}
+        onClose={() => setToastState({show: false, message: '', points: 0})}
+      />
+    </PageLayout>
   );
 };
 
