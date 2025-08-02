@@ -5,7 +5,12 @@ import {
   purchaseItem, 
   isWorkoutCompleted, 
   isItemPurchased,
-  type PointsData 
+  getWorkoutHistory,
+  getWorkoutsByDateRange,
+  getWorkoutsByMonth,
+  getWorkoutTypeStats,
+  getWorkoutsByDate,
+  type PointsData
 } from '@/services/pointsService';
 
 export const usePoints = () => {
@@ -15,9 +20,9 @@ export const usePoints = () => {
     setPointsData(getPointsData());
   };
 
-  const handleCompleteWorkout = (workoutId: string, points: number): boolean => {
+  const handleCompleteWorkout = (workoutId: string, workoutName: string, workoutIcon: string, category: 'outdoor' | 'indoor', points: number): boolean => {
     if (!isWorkoutCompleted(workoutId)) {
-      completeWorkout(workoutId, points);
+      completeWorkout(workoutId, workoutName, workoutIcon, category, points);
       refreshPoints();
       return true;
     }
@@ -47,11 +52,17 @@ export const usePoints = () => {
   return {
     totalPoints: pointsData.totalPoints,
     completedWorkouts: pointsData.completedWorkouts,
+    workoutHistory: pointsData.workoutHistory,
     purchasedItems: pointsData.purchasedItems,
     completeWorkout: handleCompleteWorkout,
     purchaseItem: handlePurchaseItem,
     isWorkoutCompleted: checkWorkoutCompleted,
     isItemPurchased: checkItemPurchased,
+    getWorkoutHistory,
+    getWorkoutsByDateRange,
+    getWorkoutsByMonth,
+    getWorkoutTypeStats,
+    getWorkoutsByDate,
     refreshPoints
   };
 };

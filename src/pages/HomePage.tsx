@@ -121,7 +121,7 @@ const HomePage: React.FC = () => {
 
   const handleStartWorkout = (workoutId: string) => {
     const workout = workouts.find(w => w.id === workoutId);
-    if (workout && completeWorkout(workoutId, workout.points)) {
+    if (workout && completeWorkout(workoutId, workout.name, workout.icon, workout.category, workout.points)) {
       setToastState({
         show: true,
         message: 'Workout completed!',
