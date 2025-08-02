@@ -1,7 +1,7 @@
 import React from "react";
 import { Home, Folder, Settings, User } from "lucide-react";
 import HomePage from "@/pages/HomePage";
-import DummyPage1 from "@/pages/DummyPage1";
+import ProgressPage from "@/pages/ProgressPage";
 import DummyPage2 from "@/pages/DummyPage2";
 import UserDashboard from "@/components/Authentification/UserDashboard";
 import { PageIds } from "@/types/PageIds";
@@ -26,8 +26,8 @@ export const appPages: AppPage[] = [
     id: PageIds.Dummy1,
     label: "Page 1",
     icon: <Folder size={20} />,
-    route: "/dummy1",
-    component: DummyPage1,
+    route: "/stats",
+    component: ProgressPage,
   },
   {
     id: PageIds.Dummy2,
