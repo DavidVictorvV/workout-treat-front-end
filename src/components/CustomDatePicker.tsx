@@ -127,14 +127,14 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   };
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full max-w-sm mx-auto">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-[#1b2a41] text-white p-3 rounded-lg text-left flex justify-between items-center border border-gray-600 hover:border-orange-400 transition-colors"
+        className="w-full bg-[#1b2a41] text-white px-4 py-3 rounded-xl text-left flex justify-between items-center border border-gray-600/50 hover:border-orange-400 transition-colors shadow-sm"
       >
-        <span>{formatDisplayDate(selected)}</span>
+        <span className="text-gray-200">{formatDisplayDate(selected)}</span>
         <svg
-          className="w-5 h-5"
+          className="w-5 h-5 text-gray-400"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -149,14 +149,14 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-full bg-[#1b2a41] border border-gray-600 rounded-lg shadow-lg p-4">
-          <div className="flex justify-between items-center mb-4">
+        <div className="absolute z-50 mt-2 w-full bg-[#1b2a41] border border-gray-600/50 rounded-xl shadow-2xl p-5 backdrop-blur-sm">
+          <div className="flex justify-between items-center mb-6">
             <button
               onClick={() => navigateMonth(-1)}
-              className="p-1 hover:bg-gray-700 rounded"
+              className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
             >
               <svg
-                className="w-5 h-5"
+                className="w-5 h-5 text-gray-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -169,17 +169,17 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                 />
               </svg>
             </button>
-            <h3 className="text-white font-semibold">
+            <h3 className="text-white font-semibold text-lg">
               {showMonthYearPicker
                 ? currentMonth.getFullYear()
                 : `${getMonthName(currentMonth)} ${currentMonth.getFullYear()}`}
             </h3>
             <button
               onClick={() => navigateMonth(1)}
-              className="p-1 hover:bg-gray-700 rounded"
+              className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
             >
               <svg
-                className="w-5 h-5"
+                className="w-5 h-5 text-gray-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -195,14 +195,14 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
           </div>
 
           {showMonthYearPicker ? (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               {Array.from({ length: 12 }, (_, i) => {
                 const monthDate = new Date(currentMonth.getFullYear(), i, 1);
                 return (
                   <button
                     key={i}
                     onClick={() => handleDateSelect(monthDate)}
-                    className="p-2 text-sm hover:bg-orange-400 hover:text-black rounded transition-colors"
+                    className="py-3 px-2 text-sm text-white hover:bg-orange-400 hover:text-black rounded-lg transition-colors font-medium"
                   >
                     {getShortMonthName(monthDate)}
                   </button>
@@ -211,11 +211,11 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-7 gap-1 mb-2">
+              <div className="grid grid-cols-7 gap-1 mb-3">
                 {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
                   <div
                     key={day}
-                    className="text-center text-xs text-gray-400 p-2"
+                    className="text-center text-xs text-gray-400 py-2 font-medium"
                   >
                     {day}
                   </div>
@@ -223,24 +223,24 @@ const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
               </div>
               <div className="grid grid-cols-7 gap-1">
                 {getDaysInMonth(currentMonth).map((day, index) => (
-                  <div key={index} className="relative">
+                  <div key={index} className="relative flex justify-center">
                     {day ? (
                       <button
                         onClick={() => handleDateSelect(day)}
-                        className={`w-full h-10 text-sm rounded transition-colors relative ${
+                        className={`w-10 h-10 text-sm rounded-lg transition-colors relative flex items-center justify-center font-medium ${
                           selected &&
                           day.toDateString() === selected.toDateString()
-                            ? "bg-orange-400 text-black"
-                            : "hover:bg-gray-700 text-white"
+                            ? "bg-orange-400 text-black shadow-md"
+                            : "hover:bg-gray-700/50 text-white"
                         }`}
                       >
                         {day.getDate()}
                         {hasWorkout(day) && (
-                          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-orange-400 rounded-full"></div>
+                          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-orange-400 rounded-full"></div>
                         )}
                       </button>
                     ) : (
-                      <div className="w-full h-10"></div>
+                      <div className="w-10 h-10"></div>
                     )}
                   </div>
                 ))}

@@ -72,12 +72,14 @@ function App() {
                 />
               </>
             ) : (
-              <AuthContainer
-                onUserLogin={(user) => {
-                  setCurrentUser(user);
-                  localStorage.setItem("loggedInUser", JSON.stringify(user));
-                }}
-              />
+              <div className="min-h-screen flex items-center justify-center">
+                <AuthContainer
+                  onUserLogin={(user) => {
+                    setCurrentUser(user);
+                    localStorage.setItem("loggedInUser", JSON.stringify(user));
+                  }}
+                />
+              </div>
             )}
           </div>
         </div>
