@@ -1,7 +1,7 @@
 import React from "react";
-import { Home, Folder, Settings, User } from "lucide-react";
+import { Dumbbell, BarChart3, ShoppingBag, User } from "lucide-react";
 import HomePage from "@/pages/HomePage";
-import DummyPage1 from "@/pages/DummyPage1";
+import ProgressPage from "@/pages/ProgressPage";
 import DummyPage2 from "@/pages/DummyPage2";
 import UserDashboard from "@/components/Authentification/UserDashboard";
 import { PageIds } from "@/types/PageIds";
@@ -11,30 +11,31 @@ export interface AppPage {
   label: string;
   icon: React.ReactNode;
   route: string;
-  component: React.FC<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  component: React.ComponentType<any>;
 }
 
 export const appPages: AppPage[] = [
   {
     id: PageIds.Home,
-    label: "Home",
-    icon: <Home size={20} />,
-    route: "/home",
+    label: "Workouts",
+    icon: <Dumbbell size={20} />,
+    route: "/workouts",
     component: HomePage,
   },
   {
-    id: PageIds.Dummy1,
-    label: "Page 1",
-    icon: <Folder size={20} />,
-    route: "/dummy1",
-    component: DummyPage1,
+    id: PageIds.Dummy2,
+    label: "Store",
+    icon: <ShoppingBag size={20} />,
+    route: "/store",
+    component: DummyPage2,
   },
   {
-    id: PageIds.Dummy2,
-    label: "Page 2",
-    icon: <Settings size={20} />,
-    route: "/dummy2",
-    component: DummyPage2,
+    id: PageIds.Dummy1,
+    label: "Stats",
+    icon: <BarChart3 size={20} />,
+    route: "/stats",
+    component: ProgressPage,
   },
   {
     id: PageIds.Profile,

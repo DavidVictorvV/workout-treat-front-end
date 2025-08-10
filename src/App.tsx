@@ -4,7 +4,10 @@ import { BrowserRouter as Router } from "react-router-dom";
 import AuthContainer from "@/components/Authentification/AuthContainer";
 import PageNavigator from "@/components/PageNavigator/PageNavigator";
 import { GoogleSignInProvider } from "@/contexts/GoogleSignInContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { BackendDataProvider } from "@/contexts/BackendDataContext";
 import MainAppRouter from "@/routes/MainAppRouter";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 
 import "./App.css";
 import type { User } from "@/types/User";
@@ -14,24 +17,55 @@ function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState<PageIds>(PageIds.Home);
+  const { isFirebaseReady, shouldAutoLogin, getFirebaseUserInfo } = useFirebaseAuth();
 
-  // Restore user session
+  // Check for auto-login from localStorage or Firebase
   useEffect(() => {
-    const storedUser = localStorage.getItem("loggedInUser");
-    if (storedUser) {
-      try {
-        const parsedUser: User = JSON.parse(storedUser);
-        console.log("Restored user from localStorage:", parsedUser.email);
-        setCurrentUser(parsedUser);
-      } catch (e) {
-        console.error("Failed to parse stored user", e);
-        localStorage.removeItem("loggedInUser");
+    const checkAutoLogin = () => {
+      // First check for regular login auto-login
+      const autoLogin = localStorage.getItem('autoLogin');
+      const userData = localStorage.getItem('user');
+      
+      if (autoLogin === 'true' && userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          if (parsedUser.rememberMe && parsedUser.token) {
+            console.log('🔄 Auto-login from stored credentials');
+            setCurrentUser(parsedUser);
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.warn('⚠️ Failed to parse stored user data:', error);
+          localStorage.removeItem('user');
+          localStorage.removeItem('autoLogin');
+        }
       }
-    } else {
-      console.log("No user found in localStorage");
-    }
-    setLoading(false);
-  }, []);
+      
+      // Fallback to Firebase auto-login if available
+      if (!isFirebaseReady) {
+        setLoading(false);
+        return;
+      }
+
+      if (shouldAutoLogin()) {
+        const firebaseUserInfo = getFirebaseUserInfo();
+        if (firebaseUserInfo) {
+          console.log('🔄 Firebase user authenticated - backend will provide user data');
+          setCurrentUser(firebaseUserInfo);
+          
+          // Store Firebase user for token refresh
+          localStorage.setItem('user', JSON.stringify({ ...firebaseUserInfo, token: firebaseUserInfo.idToken, rememberMe: true }));
+          localStorage.setItem('autoLogin', 'true');
+        }
+      } else {
+        console.log('🔄 No authentication found');
+      }
+      setLoading(false);
+    };
+
+    checkAutoLogin();
+  }, [isFirebaseReady, shouldAutoLogin, getFirebaseUserInfo]);
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
@@ -44,7 +78,12 @@ function App() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("loggedInUser");
+    // Clear all localStorage data
+    localStorage.removeItem('user');
+    localStorage.removeItem('autoLogin');
+    console.log('🔄 Logout: localStorage cleared');
+    
+    // Clear user state
     setCurrentUser(null);
   };
 
@@ -56,28 +95,44 @@ function App() {
         <div className="app">
           <div className="app-background">
             {currentUser ? (
-              <>
-                <MainAppRouter
-                  currentPage={currentPage}
-                  currentUser={currentUser}
-                  onLogout={handleLogout}
-                />
-                <PageNavigator
-                  isLoggedIn={!!currentUser}
-                  currentPage={currentPage}
-                  onNavigate={(page) => {
-                    window.history.pushState({ page }, "", "/");
-                    setCurrentPage(page);
+              <AuthProvider onLogout={handleLogout}>
+                <BackendDataProvider>
+                  <MainAppRouter
+                    currentPage={currentPage}
+                    currentUser={currentUser}
+                    onLogout={handleLogout}
+                  />
+                  <PageNavigator
+                    isLoggedIn={!!currentUser}
+                    currentPage={currentPage}
+                    onNavigate={(page) => {
+                      window.history.pushState({ page }, "", "/");
+                      setCurrentPage(page);
+                    }}
+                  />
+                </BackendDataProvider>
+              </AuthProvider>
+            ) : (
+              <div className="min-h-screen flex items-center justify-center">
+                <AuthContainer
+                  onUserLogin={(user, rememberMe = false) => {
+                    console.log('🔄 User authenticated - storing token for API calls');
+                    setCurrentUser(user);
+                    
+                    if (rememberMe) {
+                      // Store user data with token for persistent login
+                      localStorage.setItem('user', JSON.stringify({ ...user, token: user.idToken, rememberMe: true }));
+                      localStorage.setItem('autoLogin', 'true');
+                      console.log('💾 User session saved for auto-login');
+                    } else {
+                      // Store user data with token for current session only
+                      localStorage.setItem('user', JSON.stringify({ ...user, token: user.idToken, rememberMe: false }));
+                      localStorage.removeItem('autoLogin');
+                      console.log('💾 User session saved for current session only');
+                    }
                   }}
                 />
-              </>
-            ) : (
-              <AuthContainer
-                onUserLogin={(user) => {
-                  setCurrentUser(user);
-                  localStorage.setItem("loggedInUser", JSON.stringify(user));
-                }}
-              />
+              </div>
             )}
           </div>
         </div>
