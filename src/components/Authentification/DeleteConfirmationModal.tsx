@@ -44,7 +44,17 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
         <h3>⚠️ Delete Account</h3>
         <p>
           Are you sure you want to delete your account? This action cannot be
-          undone and will permanently remove all your data.
+          undone and will permanently remove:
+        </p>
+        <ul className="text-left my-4 text-sm text-slate-300">
+          <li>• Your user profile and settings</li>
+          <li>• All workout history and progress</li>
+          <li>• Fitness level and achievements</li>
+          <li>• Points and streaks</li>
+          <li>• Store purchases and activity</li>
+        </ul>
+        <p className="text-red-400 font-medium">
+          This cannot be undone!
         </p>
         <div className="modal-actions">
           <button

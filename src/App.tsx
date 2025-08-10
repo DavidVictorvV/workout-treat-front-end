@@ -113,26 +113,24 @@ function App() {
                 </BackendDataProvider>
               </AuthProvider>
             ) : (
-              <div className="min-h-screen flex items-center justify-center">
-                <AuthContainer
-                  onUserLogin={(user, rememberMe = false) => {
-                    console.log('🔄 User authenticated - storing token for API calls');
-                    setCurrentUser(user);
-                    
-                    if (rememberMe) {
-                      // Store user data with token for persistent login
-                      localStorage.setItem('user', JSON.stringify({ ...user, token: user.idToken, rememberMe: true }));
-                      localStorage.setItem('autoLogin', 'true');
-                      console.log('💾 User session saved for auto-login');
-                    } else {
-                      // Store user data with token for current session only
-                      localStorage.setItem('user', JSON.stringify({ ...user, token: user.idToken, rememberMe: false }));
-                      localStorage.removeItem('autoLogin');
-                      console.log('💾 User session saved for current session only');
-                    }
-                  }}
-                />
-              </div>
+              <AuthContainer
+                onUserLogin={(user, rememberMe = false) => {
+                  console.log('🔄 User authenticated - storing token for API calls');
+                  setCurrentUser(user);
+                  
+                  if (rememberMe) {
+                    // Store user data with token for persistent login
+                    localStorage.setItem('user', JSON.stringify({ ...user, token: user.idToken, rememberMe: true }));
+                    localStorage.setItem('autoLogin', 'true');
+                    console.log('💾 User session saved for auto-login');
+                  } else {
+                    // Store user data with token for current session only
+                    localStorage.setItem('user', JSON.stringify({ ...user, token: user.idToken, rememberMe: false }));
+                    localStorage.removeItem('autoLogin');
+                    console.log('💾 User session saved for current session only');
+                  }
+                }}
+              />
             )}
           </div>
         </div>

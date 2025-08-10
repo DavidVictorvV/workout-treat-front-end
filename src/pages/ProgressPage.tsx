@@ -3,6 +3,7 @@ import { Star, Dumbbell, Trophy, Target, RefreshCw } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
 import StatsCard from "@/components/StatsCard";
 import WorkoutChart from "@/components/WorkoutChart";
+import WorkoutProgress from "@/components/WorkoutProgress";
 import DateFilter, { type DateFilterType, type DateRange } from "@/components/DateFilter";
 import WorkoutCalendar from "@/components/WorkoutCalendar";
 import { useBackendData } from "@/hooks/useBackendData";
@@ -15,6 +16,7 @@ const ProgressPage: React.FC = () => {
     workoutHistory, 
     workoutStats,
     chartData,
+    userProgress,
     loading, 
     error,
     statsLoading,
@@ -236,6 +238,9 @@ const ProgressPage: React.FC = () => {
           />
         </div>
       ) : null}
+
+      {/* Workout Progress & Levels */}
+      <WorkoutProgress userProgress={userProgress} />
 
       {/* Recent Achievements */}
       <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
