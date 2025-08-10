@@ -11,7 +11,8 @@ export interface AppPage {
   label: string;
   icon: React.ReactNode;
   route: string;
-  component: React.FC<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  component: React.ComponentType<any>;
 }
 
 export const appPages: AppPage[] = [

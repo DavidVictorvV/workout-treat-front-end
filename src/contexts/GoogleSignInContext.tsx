@@ -1,6 +1,5 @@
 import React, {
   createContext,
-  useContext,
   useState,
   useEffect,
   type ReactNode,
@@ -14,15 +13,7 @@ const GoogleSignInContext = createContext<GoogleSignInContextType | undefined>(
   undefined
 );
 
-export const useGoogleSignIn = (): GoogleSignInContextType => {
-  const context = useContext(GoogleSignInContext);
-  if (!context) {
-    throw new Error(
-      "useGoogleSignIn must be used within a GoogleSignInProvider"
-    );
-  }
-  return context;
-};
+export { GoogleSignInContext };
 
 interface GoogleSignInProviderProps {
   children: ReactNode;

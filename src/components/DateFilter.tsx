@@ -59,12 +59,14 @@ const DateFilter: React.FC<DateFilterProps> = ({
 
   const getFilterLabel = (): string => {
     switch (selectedFilter) {
-      case 'thisMonth':
+      case 'thisMonth': {
         const current = getCurrentMonth();
         return formatMonthName(current.year, current.month);
-      case 'lastMonth':
+      }
+      case 'lastMonth': {
         const last = getLastMonth();
         return formatMonthName(last.year, last.month);
+      }
       case 'custom':
         if (customDateRange.startDate && customDateRange.endDate) {
           const start = new Date(customDateRange.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });

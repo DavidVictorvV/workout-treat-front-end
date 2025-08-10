@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User as UserIcon, Flame, Heart, Bell, Target, Shield, FileText, ChevronRight } from "lucide-react";
+import { User as UserIcon, Flame, Heart, Bell, Target, Shield, FileText, ChevronRight, RefreshCw } from "lucide-react";
 import DeleteConfirmationModal from "@/components/Authentification/DeleteConfirmationModal";
-import { deleteAccount } from "@/services/authService";
+import { signOut } from "@/services/firebaseAuth";
 import type { User } from "@/types/User";
 import PageLayout from "@/components/PageLayout";
 import StatsCard from "@/components/StatsCard";
 import Button from "@/components/Button";
-import { usePoints } from "@/hooks/usePoints";
+import { useBackendData } from "@/hooks/useBackendData";
 
 interface UserDashboardProps {
   user: User;
@@ -28,7 +28,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
 
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const navigate = useNavigate();
-  const { totalPoints, completedWorkouts } = usePoints();
+  const { totalPoints, currentStreak, workoutHistory, refreshUserData, loading } = useBackendData();
 
   const handleLogout = () => {
     onLogout();
@@ -37,26 +37,50 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
 
   const handleDeleteAccount = async () => {
     try {
-      await deleteAccount(user.localId, user.idToken);
+      // Note: Account deletion now requires backend API integration
+      // For now, just sign out from Firebase
+      await signOut();
       setShowDeleteModal(false);
       setTimeout(() => {
         onLogout();
         navigate("/");
       }, 1000);
-    } catch (error: any) {
-      console.error('Error deleting account:', error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error deleting account:', message);
     }
   };
 
   // User stats based on actual data
-  const dayStreak = completedWorkouts.length;
-  const favoriteExercise = "Running";
+  const dayStreak = currentStreak;
+  const favoriteExercise = workoutHistory.length > 0 
+    ? workoutHistory.reduce((acc, workout) => {
+        acc[workout.workoutName] = (acc[workout.workoutName] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>)
+    : "No workouts yet";
+  
+  const favoriteWorkoutName = typeof favoriteExercise === 'object' 
+    ? Object.entries(favoriteExercise).sort(([,a], [,b]) => b - a)[0]?.[0] || "No workouts yet"
+    : favoriteExercise;
 
   return (
     <>
       <PageLayout points={totalPoints} title="Profile">
+        {/* Header with reload button */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-slate-200">Profile Overview</h2>
+          <button
+            onClick={refreshUserData}
+            disabled={loading}
+            className="p-2 bg-slate-700/50 hover:bg-slate-600/50 rounded-lg border border-slate-600/50 transition-colors disabled:opacity-50"
+            title="Reload profile data"
+          >
+            <RefreshCw className={`w-4 h-4 text-slate-300 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
 
-            {/* User Profile Card */}
+        {/* User Profile Card */}
             <div className="bg-slate-800/40 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 mb-6">
               <div className="text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -80,7 +104,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
               />
               <StatsCard
                 icon={Heart}
-                value={favoriteExercise}
+                value={favoriteWorkoutName}
                 label="Favorite"
                 iconColor="text-red-400"
                 valueColor="text-red-400"

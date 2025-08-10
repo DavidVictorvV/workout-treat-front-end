@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { WorkoutEntry } from '@/services/pointsService';
+import type { WorkoutHistoryEntry } from '@/services/apiService';
 import type { DateRange } from './DateFilter';
+
+type WorkoutEntry = WorkoutHistoryEntry;
 
 interface WorkoutCalendarProps {
   workoutEntries: WorkoutEntry[];

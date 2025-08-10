@@ -1,6 +1,8 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import type { WorkoutEntry } from '@/services/pointsService';
+import type { WorkoutHistoryEntry } from '@/services/apiService';
+
+type WorkoutEntry = WorkoutHistoryEntry;
 
 interface WorkoutChartProps {
   workoutEntries: WorkoutEntry[];
@@ -154,7 +156,7 @@ const WorkoutChart: React.FC<WorkoutChartProps> = ({ workoutEntries, dateRange }
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-purple-400">
-            {workoutEntries.reduce((sum, entry) => sum + entry.points, 0)}
+            {workoutEntries.reduce((sum, entry) => sum + entry.pointsEarned, 0)}
           </div>
           <div className="text-sm text-slate-400">Points Earned</div>
         </div>

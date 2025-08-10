@@ -1,11 +1,11 @@
-import React, { useEffect } from "react";
-import { useGoogleSignIn } from "@/contexts/GoogleSignInContext";
-import { googleSignIn } from "@/services/authService";
+import React, { useEffect, useCallback } from "react";
+import { useGoogleSignIn } from "@/hooks/useGoogleSignIn";
+import { signInWithGoogleCredential } from "@/services/firebaseAuth";
 import type { User } from "@/types/User";
 
 interface GoogleSignInProps {
   onMessage: (text: string, type: "success" | "error" | "loading") => void;
-  onUserLogin: (userData: User) => void;
+  onUserLogin: (userData: User, rememberMe?: boolean) => void;
 }
 
 interface GoogleCredentialResponse {
@@ -18,30 +18,32 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
 }) => {
   const { isGoogleLoaded } = useGoogleSignIn();
 
-  const handleGoogleSignIn = async (response: GoogleCredentialResponse) => {
+  const handleGoogleSignIn = useCallback(async (response: GoogleCredentialResponse) => {
     onMessage("Signing in with Google...", "loading");
 
     try {
-      const userDataFromApi = await googleSignIn(response.credential);
+      // Authenticate with Firebase using the Google credential
+      const firebaseUser = await signInWithGoogleCredential(response.credential);
+      
+      if (!firebaseUser) {
+        throw new Error("Firebase authentication failed");
+      }
 
-      // Map API response to User type if needed
+      // Create User object from Firebase user data
       const userData: User = {
-        localId: userDataFromApi.localId,
-        displayName: userDataFromApi.displayName,
-        email: userDataFromApi.email,
-        isNewUser: userDataFromApi.isNewUser,
-        idToken: userDataFromApi.idToken,
+        localId: firebaseUser.uid,
+        displayName: firebaseUser.displayName || "",
+        email: firebaseUser.email || "",
+        idToken: await firebaseUser.getIdToken(),
       };
 
-      const message = userData.isNewUser
-        ? "Welcome! Account created successfully!"
-        : "Welcome back!";
-      onMessage(message, "success");
-      onUserLogin(userData);
-    } catch (error: any) {
-      onMessage(`Error: ${error.message}`, "error");
+      onMessage("Welcome! Signed in with Google successfully!", "success");
+      onUserLogin(userData, true); // Always remember Google sign-in
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error occurred';
+      onMessage(`Error: ${message}`, "error");
     }
-  };
+  }, [onMessage, onUserLogin]);
 
   useEffect(() => {
     if (isGoogleLoaded && window.google?.accounts?.id) {
@@ -61,7 +63,7 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
         }
       );
     }
-  }, [isGoogleLoaded]);
+  }, [isGoogleLoaded, handleGoogleSignIn]);
 
   return (
     <div className="google-signin-container">
