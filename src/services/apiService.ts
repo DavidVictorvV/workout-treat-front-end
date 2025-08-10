@@ -19,25 +19,35 @@ export interface User {
   longestStreak: number;
   lastWorkoutDate?: string;
   memberSince: string;
+  fitnessLevel?: number;
 }
 
 export interface Workout {
   id: string;
   name: string;
   icon: string;
-  category: 'outdoor' | 'indoor';
+  category: 'outdoor' | 'indoor' | 'anywhere';
   duration: string;
   points: number;
+  level?: number;
+  workoutTypeId?: string;
+  description?: string;
+  isCurrentLevel?: boolean;
 }
 
 export interface WorkoutHistoryEntry {
   id: string;
   workoutName: string;
   workoutIcon: string;
-  category: 'outdoor' | 'indoor';
+  category: 'outdoor' | 'indoor' | 'anywhere';
   pointsEarned: number;
   completedAt: string;
   date: string;
+  level?: number;
+  workoutTypeId?: string;
+  description?: string;
+  levelUp?: boolean;
+  newLevel?: number;
 }
 
 export interface StoreItem {
@@ -259,10 +269,11 @@ const getAuthToken = async (): Promise<string | null> => {
   return null;
 };
 
-// Generic API request function - all endpoints require authentication
+// Generic API request function with automatic token refresh
 const apiRequest = async <T>(
   endpoint: string, 
-  options: RequestInit = {}
+  options: RequestInit = {},
+  isRetry: boolean = false
 ): Promise<T> => {
   if (!API_BASE_URL) {
     throw new APIError(500, 'Backend URL not configured. Please set VITE_API_BASE_URL environment variable.');
@@ -302,6 +313,24 @@ const apiRequest = async <T>(
         // Could not parse error response
       }
       
+      // If we get 401 and haven't retried yet, try to refresh the token and retry
+      if (response.status === 401 && !isRetry) {
+        console.warn('🔄 401 error received, attempting token refresh...');
+        
+        try {
+          // Force refresh the Firebase token
+          const freshToken = await refreshFirebaseToken();
+          if (freshToken) {
+            console.log('🔄 Token refreshed successfully, retrying request...');
+            // Retry the request with the fresh token (mark as retry to prevent infinite loops)
+            return await apiRequest<T>(endpoint, options, true);
+          }
+        } catch (refreshError) {
+          console.error('🔄 Token refresh failed:', refreshError);
+          // Fall through to throw the original 401 error
+        }
+      }
+      
       console.error(`❌ ${response.status} ${endpoint}: ${errorMessage}`);
       
       throw new APIError(response.status, `${errorMessage}${backendError ? ` (${backendError})` : ''}`);
@@ -331,15 +360,57 @@ const apiRequest = async <T>(
   }
 };
 
+// Function to force refresh Firebase token
+const refreshFirebaseToken = async (): Promise<string | null> => {
+  try {
+    const { getCurrentFirebaseUser } = await import('./firebaseAuth');
+    const currentUser = getCurrentFirebaseUser();
+    
+    if (currentUser) {
+      console.log('🔄 Refreshing Firebase token...');
+      // Force refresh the token (true parameter forces refresh)
+      const freshToken = await currentUser.getIdToken(true);
+      
+      if (freshToken) {
+        // Update localStorage with new token
+        const userSession = localStorage.getItem('user');
+        if (userSession) {
+          const userData = JSON.parse(userSession);
+          userData.token = freshToken;
+          userData.idToken = freshToken;
+          localStorage.setItem('user', JSON.stringify(userData));
+          console.log('🔄 Token refreshed and updated in localStorage');
+        }
+        return freshToken;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('❌ Error refreshing Firebase token:', error);
+    return null;
+  }
+};
+
 // Authentication API
 export const authAPI = {
   getProfile: (): Promise<{ user: User }> =>
     apiRequest('/auth-profile'),
 
-  updateProfile: (displayName: string): Promise<{ user: User }> =>
-    apiRequest('/auth-profile', {
+  updateProfile: (displayName?: string, fitnessLevel?: number): Promise<{ user: User }> => {
+    const body: { displayName?: string; fitnessLevel?: number } = {};
+    if (displayName !== undefined) body.displayName = displayName;
+    if (fitnessLevel !== undefined) body.fitnessLevel = fitnessLevel;
+    
+    return apiRequest('/auth-profile', {
       method: 'PUT',
-      body: JSON.stringify({ displayName }),
+      body: JSON.stringify(body),
+    });
+  },
+
+  deleteAccount: (): Promise<{ success: boolean; message: string }> =>
+    apiRequest('/delete-user', {
+      method: 'DELETE',
     }),
 };
 
@@ -347,6 +418,18 @@ export const authAPI = {
 export const workoutsAPI = {
   getAvailable: (): Promise<{ workouts: Workout[] }> =>
     apiRequest('/workouts'),
+    
+  getDaily: (): Promise<{ 
+    workouts: Workout[];
+    userProgress: Record<string, {
+      currentLevel: number;
+      completionsAtCurrentLevel: number;
+      totalCompletions: number;
+    }>;
+    totalWorkouts: number;
+    anywhereWorkouts: number;
+  }> =>
+    apiRequest('/workouts-daily'),
 
   complete: (workoutId: string): Promise<{
     success: boolean;
@@ -356,6 +439,12 @@ export const workoutsAPI = {
       currentStreak: number;
       longestStreak: number;
       isNewRecord: boolean;
+    };
+    levelInfo?: {
+      levelUp: boolean;
+      currentLevel: number;
+      completionsAtLevel: number;
+      workoutType: string;
     };
   }> =>
     apiRequest('/workouts-complete', {

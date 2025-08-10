@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import { useGoogleSignIn } from "@/hooks/useGoogleSignIn";
 import { signInWithGoogleCredential } from "@/services/firebaseAuth";
 import type { User } from "@/types/User";
@@ -17,13 +17,14 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
   onUserLogin,
 }) => {
   const { isGoogleLoaded } = useGoogleSignIn();
+  const [keepSignedIn, setKeepSignedIn] = useState(true);
 
   const handleGoogleSignIn = useCallback(async (response: GoogleCredentialResponse) => {
     onMessage("Signing in with Google...", "loading");
 
     try {
       // Authenticate with Firebase using the Google credential
-      const firebaseUser = await signInWithGoogleCredential(response.credential);
+      const firebaseUser = await signInWithGoogleCredential(response.credential, keepSignedIn);
       
       if (!firebaseUser) {
         throw new Error("Firebase authentication failed");
@@ -38,12 +39,12 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
       };
 
       onMessage("Welcome! Signed in with Google successfully!", "success");
-      onUserLogin(userData, true); // Always remember Google sign-in
+      onUserLogin(userData, keepSignedIn);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error occurred';
       onMessage(`Error: ${message}`, "error");
     }
-  }, [onMessage, onUserLogin]);
+  }, [onMessage, onUserLogin, keepSignedIn]);
 
   useEffect(() => {
     if (isGoogleLoaded && window.google?.accounts?.id) {
@@ -67,6 +68,18 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
 
   return (
     <div className="google-signin-container">
+      <div className="flex items-center space-x-2 mb-4">
+        <input
+          type="checkbox"
+          id="keepSignedInGoogle"
+          checked={keepSignedIn}
+          onChange={(e) => setKeepSignedIn(e.target.checked)}
+          className="w-4 h-4 text-amber-600 bg-slate-700 border-slate-600 rounded focus:ring-amber-500 focus:ring-2"
+        />
+        <label htmlFor="keepSignedInGoogle" className="text-sm text-slate-300">
+          Keep me signed in
+        </label>
+      </div>
       <div id="googleSignInDiv"></div>
     </div>
   );

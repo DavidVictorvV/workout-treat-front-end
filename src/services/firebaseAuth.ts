@@ -2,10 +2,14 @@ import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  signInWithCredential, 
+  signInWithCredential,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
   onAuthStateChanged, 
   setPersistence,
   browserLocalPersistence,
+  browserSessionPersistence,
   type User as FirebaseUser 
 } from 'firebase/auth';
 
@@ -67,6 +71,7 @@ let currentFirebaseUser: FirebaseUser | null = null;
 let authStateListeners: Array<(user: FirebaseUser | null) => void> = [];
 let isInitialized = false;
 let initializationPromise: Promise<boolean> | null = null;
+let tokenRefreshTimer: NodeJS.Timeout | null = null;
 
 // Initialize Firebase only if configured
 const initializeFirebase = async (): Promise<boolean> => {
@@ -107,6 +112,13 @@ const initializeFirebase = async (): Promise<boolean> => {
       onAuthStateChanged(auth, (user) => {
         currentFirebaseUser = user;
         authStateListeners.forEach(listener => listener(user));
+        
+        // Set up automatic token refresh when user signs in
+        if (user) {
+          setupAutomaticTokenRefresh();
+        } else {
+          clearTokenRefreshTimer();
+        }
       });
 
       console.log('🔥 Firebase initialized successfully');
@@ -120,6 +132,52 @@ const initializeFirebase = async (): Promise<boolean> => {
   })();
 
   return await initializationPromise;
+};
+
+/**
+ * Set up automatic token refresh every 50 minutes
+ */
+const setupAutomaticTokenRefresh = () => {
+  clearTokenRefreshTimer();
+  
+  // Refresh token every 50 minutes (Firebase tokens expire after 1 hour)
+  tokenRefreshTimer = setInterval(async () => {
+    if (currentFirebaseUser) {
+      try {
+        console.log('🔄 Proactive token refresh...');
+        const freshToken = await currentFirebaseUser.getIdToken(true);
+        
+        if (freshToken) {
+          // Update localStorage with new token
+          const userSession = localStorage.getItem('user');
+          if (userSession) {
+            const userData = JSON.parse(userSession);
+            userData.token = freshToken;
+            userData.idToken = freshToken;
+            localStorage.setItem('user', JSON.stringify(userData));
+            console.log('🔄 Token proactively refreshed');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Proactive token refresh failed:', error);
+        // If refresh fails, clear the timer and let the user re-authenticate
+        clearTokenRefreshTimer();
+      }
+    }
+  }, 50 * 60 * 1000); // 50 minutes
+  
+  console.log('🔄 Automatic token refresh set up');
+};
+
+/**
+ * Clear the token refresh timer
+ */
+const clearTokenRefreshTimer = () => {
+  if (tokenRefreshTimer) {
+    clearInterval(tokenRefreshTimer);
+    tokenRefreshTimer = null;
+    console.log('🔄 Token refresh timer cleared');
+  }
 };
 
 /**
@@ -145,7 +203,10 @@ export const getFirebaseIdToken = async (): Promise<string | null> => {
 /**
  * Sign in with Google credential and store the Firebase user
  */
-export const signInWithGoogleCredential = async (googleIdToken: string): Promise<FirebaseUser | null> => {
+export const signInWithGoogleCredential = async (
+  googleIdToken: string, 
+  keepSignedIn: boolean = true
+): Promise<FirebaseUser | null> => {
   const initialized = await initializeFirebase();
   if (!initialized) {
     console.warn('🔥 Firebase not configured, skipping Firebase sign-in');
@@ -154,6 +215,13 @@ export const signInWithGoogleCredential = async (googleIdToken: string): Promise
 
   try {
     if (!auth) throw new Error('Auth not initialized');
+    
+    // Set persistence based on keepSignedIn option
+    const persistence = keepSignedIn ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistence);
+    
+    console.log(`🔥 Attempting Google sign-in with ${keepSignedIn ? 'persistent' : 'session'} storage`);
+    
     const credential = GoogleAuthProvider.credential(googleIdToken);
     const result = await signInWithCredential(auth, credential);
     console.log('🔥 Firebase sign-in successful');
@@ -195,12 +263,87 @@ export const signOut = async (): Promise<void> => {
   }
 
   try {
+    // Clear the automatic token refresh
+    clearTokenRefreshTimer();
+    
     if (auth) {
       await auth.signOut();
       console.log('🔥 Firebase sign-out successful');
     }
   } catch (error) {
     console.error('❌ Firebase sign-out failed:', error);
+  }
+};
+
+/**
+ * Sign in with email and password
+ */
+export const signInWithEmailPassword = async (
+  email: string, 
+  password: string, 
+  keepSignedIn: boolean = true
+): Promise<FirebaseUser | null> => {
+  const initialized = await initializeFirebase();
+  if (!initialized) {
+    console.warn('🔥 Firebase not configured, cannot sign in with email/password');
+    return null;
+  }
+
+  try {
+    if (!auth) throw new Error('Auth not initialized');
+    
+    // Set persistence based on keepSignedIn option
+    const persistence = keepSignedIn ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistence);
+    
+    console.log(`🔥 Attempting email/password sign-in with ${keepSignedIn ? 'persistent' : 'session'} storage`);
+    
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    console.log('🔥 Email/password sign-in successful');
+    return result.user;
+  } catch (error) {
+    console.error('❌ Email/password sign-in failed:', error);
+    throw error; // Re-throw to let the component handle the error
+  }
+};
+
+/**
+ * Create a new account with email and password
+ */
+export const createUserWithEmailPassword = async (
+  email: string, 
+  password: string, 
+  displayName: string,
+  keepSignedIn: boolean = true
+): Promise<FirebaseUser | null> => {
+  const initialized = await initializeFirebase();
+  if (!initialized) {
+    console.warn('🔥 Firebase not configured, cannot create account');
+    return null;
+  }
+
+  try {
+    if (!auth) throw new Error('Auth not initialized');
+    
+    // Set persistence based on keepSignedIn option
+    const persistence = keepSignedIn ? browserLocalPersistence : browserSessionPersistence;
+    await setPersistence(auth, persistence);
+    
+    console.log(`🔥 Creating new account with ${keepSignedIn ? 'persistent' : 'session'} storage`);
+    
+    const result = await createUserWithEmailAndPassword(auth, email, password);
+    
+    // Update the user's display name
+    if (displayName && result.user) {
+      await updateProfile(result.user, { displayName: displayName.trim() });
+      console.log('🔥 Display name updated');
+    }
+    
+    console.log('🔥 Account creation successful');
+    return result.user;
+  } catch (error) {
+    console.error('❌ Account creation failed:', error);
+    throw error; // Re-throw to let the component handle the error
   }
 };
 

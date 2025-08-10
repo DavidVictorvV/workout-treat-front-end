@@ -14,7 +14,7 @@ import {
   type ChartData
 } from '@/services/apiService';
 import { useFirebaseAuth } from '@/hooks/useFirebaseAuth';
-import { BackendDataContext, type BackendDataContextType } from './BackendDataContextDefinition';
+import { BackendDataContext, type BackendDataContextType, type LevelInfo, type UserProgress } from './BackendDataContextDefinition';
 
 interface BackendDataProviderProps {
   children: ReactNode;
@@ -33,6 +33,7 @@ export const BackendDataProvider: React.FC<BackendDataProviderProps> = ({ childr
   const [user, setUser] = useState<User | null>(null);
   const [availableWorkouts, setAvailableWorkouts] = useState<Workout[]>([]);
   const [workoutHistory, setWorkoutHistory] = useState<WorkoutHistoryEntry[]>([]);
+  const [userProgress, setUserProgress] = useState<Record<string, UserProgress>>({});
   const [storeItems, setStoreItems] = useState<StoreItem[]>([]);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   
@@ -95,22 +96,30 @@ export const BackendDataProvider: React.FC<BackendDataProviderProps> = ({ childr
     }
   }, []);
 
-  // Refresh workouts data
+  // Refresh workouts data - use daily workouts for personalized level-based selection
   const refreshWorkouts = useCallback(async () => {
     try {
       setWorkoutsLoading(true);
       setError(null);
       
-      // Fetch available workouts and user's workout history in parallel
-      const [availableData, historyData] = await Promise.all([
-        workoutsAPI.getAvailable(),
+      // Fetch daily workouts and user's workout history in parallel
+      const [dailyData, historyData] = await Promise.all([
+        workoutsAPI.getDaily(),
         workoutsAPI.getHistory()
       ]);
       
-      setAvailableWorkouts(availableData.workouts);
+      setAvailableWorkouts(dailyData.workouts);
+      setUserProgress(dailyData.userProgress);
       setWorkoutHistory(historyData.workouts);
     } catch (error) {
-      handleError(error, 'fetching workouts');
+      // Fallback to regular workouts if daily API fails
+      console.warn('Daily workouts API failed, falling back to regular workouts:', error);
+      try {
+        const availableData = await workoutsAPI.getAvailable();
+        setAvailableWorkouts(availableData.workouts);
+      } catch (fallbackError) {
+        handleError(fallbackError, 'fetching workouts');
+      }
     } finally {
       setWorkoutsLoading(false);
     }
@@ -180,7 +189,7 @@ export const BackendDataProvider: React.FC<BackendDataProviderProps> = ({ childr
   }, []);
 
   // Complete a workout
-  const completeWorkout = useCallback(async (workoutId: string): Promise<boolean> => {
+  const completeWorkout = useCallback(async (workoutId: string): Promise<{ success: boolean; levelInfo?: LevelInfo }> => {
     try {
       setError(null);
       const result = await workoutsAPI.complete(workoutId);
@@ -207,14 +216,37 @@ export const BackendDataProvider: React.FC<BackendDataProviderProps> = ({ childr
             category: workout.category,
             pointsEarned: workout.points,
             date: today,
-            completedAt: new Date().toISOString()
+            completedAt: new Date().toISOString(),
+            level: workout.level,
+            workoutTypeId: workout.workoutTypeId,
+            description: workout.description,
+            levelUp: result.levelInfo?.levelUp,
+            newLevel: result.levelInfo?.currentLevel
           };
           setWorkoutHistory(prev => [...prev, newHistoryEntry]);
         }
         
-        return true;
+        // Update user progress if level info is returned
+        if (result.levelInfo && result.levelInfo.workoutType) {
+          const levelInfo = result.levelInfo;
+          setUserProgress(prev => ({
+            ...prev,
+            [levelInfo.workoutType]: {
+              currentLevel: levelInfo.currentLevel,
+              completionsAtCurrentLevel: levelInfo.completionsAtLevel,
+              totalCompletions: (prev[levelInfo.workoutType]?.totalCompletions || 0) + 1
+            }
+          }));
+          
+          // Refresh workouts to get updated daily selection if level changed
+          if (levelInfo.levelUp) {
+            setTimeout(() => refreshWorkouts(), 1000);
+          }
+        }
+        
+        return { success: true, levelInfo: result.levelInfo };
       }
-      return false;
+      return { success: false };
     } catch (error) {
       // Check if the error is "already completed today" - this should be treated as success
       if (error instanceof APIError && error.status === 400 && error.message.includes('already completed today')) {
@@ -233,19 +265,22 @@ export const BackendDataProvider: React.FC<BackendDataProviderProps> = ({ childr
               category: workout.category,
               pointsEarned: workout.points,
               date: today,
-              completedAt: new Date().toISOString()
+              completedAt: new Date().toISOString(),
+              level: workout.level,
+              workoutTypeId: workout.workoutTypeId,
+              description: workout.description
             };
             setWorkoutHistory(prev => [...prev, newHistoryEntry]);
           }
         }
         
-        return true;
+        return { success: true };
       }
       
       handleError(error, 'completing workout');
-      return false;
+      return { success: false };
     }
-  }, [user, availableWorkouts, workoutHistory]);
+  }, [user, availableWorkouts, workoutHistory, refreshWorkouts]);
 
   // Purchase an item
   const purchaseItem = useCallback(async (itemId: string): Promise<boolean> => {
@@ -437,6 +472,7 @@ export const BackendDataProvider: React.FC<BackendDataProviderProps> = ({ childr
     // Workouts
     availableWorkouts,
     workoutHistory,
+    userProgress,
     
     // Store
     storeItems,

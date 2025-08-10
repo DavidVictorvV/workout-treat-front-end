@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { User as UserIcon, Flame, Heart, Bell, Target, Shield, FileText, ChevronRight, RefreshCw } from "lucide-react";
 import DeleteConfirmationModal from "@/components/Authentification/DeleteConfirmationModal";
 import { signOut } from "@/services/firebaseAuth";
+import { authAPI } from "@/services/apiService";
 import type { User } from "@/types/User";
 import PageLayout from "@/components/PageLayout";
 import StatsCard from "@/components/StatsCard";
@@ -37,17 +38,41 @@ const UserDashboard: React.FC<UserDashboardProps> = ({
 
   const handleDeleteAccount = async () => {
     try {
-      // Note: Account deletion now requires backend API integration
-      // For now, just sign out from Firebase
-      await signOut();
+      console.log('🗑️ Starting account deletion process...');
+      
+      // Call backend API to delete user account and all data
+      await authAPI.deleteAccount();
+      
+      console.log('✅ Account deleted successfully from backend');
+      
+      // Sign out from Firebase (may already be done by backend, but ensure clean state)
+      try {
+        await signOut();
+      } catch (signOutError) {
+        console.warn('Firebase sign-out after deletion:', signOutError);
+        // Continue even if sign-out fails - account is already deleted
+      }
+      
       setShowDeleteModal(false);
+      
+      // Clear any local storage and logout
+      localStorage.clear();
+      
+      // Show success message and redirect
       setTimeout(() => {
         onLogout();
         navigate("/");
       }, 1000);
+      
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error occurred';
-      console.error('Error deleting account:', message);
+      console.error('❌ Error deleting account:', message);
+      
+      // Still close modal and show error state
+      setShowDeleteModal(false);
+      
+      // Show error to user (you might want to add error state to the component)
+      alert(`Failed to delete account: ${message}\nPlease try again or contact support.`);
     }
   };
 

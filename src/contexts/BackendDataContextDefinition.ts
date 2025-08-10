@@ -1,6 +1,19 @@
 import { createContext } from 'react';
 import type { User, Workout, WorkoutHistoryEntry, StoreItem, Purchase, WorkoutStats, ChartData } from '@/services/apiService';
 
+export interface LevelInfo {
+  levelUp: boolean;
+  currentLevel: number;
+  completionsAtLevel: number;
+  workoutType: string;
+}
+
+export interface UserProgress {
+  currentLevel: number;
+  completionsAtCurrentLevel: number;
+  totalCompletions: number;
+}
+
 export interface BackendDataContextType {
   // User data
   user: User | null;
@@ -11,6 +24,7 @@ export interface BackendDataContextType {
   // Workouts
   availableWorkouts: Workout[];
   workoutHistory: WorkoutHistoryEntry[];
+  userProgress: Record<string, UserProgress>;
   
   // Store
   storeItems: StoreItem[];
@@ -30,7 +44,7 @@ export interface BackendDataContextType {
   error: string | null;
   
   // Actions
-  completeWorkout: (workoutId: string) => Promise<boolean>;
+  completeWorkout: (workoutId: string) => Promise<{ success: boolean; levelInfo?: LevelInfo }>;
   purchaseItem: (itemId: string) => Promise<boolean>;
   isWorkoutCompleted: (workoutId: string) => Promise<boolean>;
   isItemPurchased: (itemId: string) => Promise<boolean>;

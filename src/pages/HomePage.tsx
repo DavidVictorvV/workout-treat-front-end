@@ -8,7 +8,7 @@ import BackendErrorDisplay from "@/components/BackendErrorDisplay";
 import { useBackendData } from "@/hooks/useBackendData";
 import { useAuth } from "@/hooks/useAuth";
 
-type FilterCategory = "all" | "outdoor" | "indoor";
+type FilterCategory = "all" | "outdoor" | "indoor" | "anywhere";
 
 const HomePage: React.FC = () => {
   const { signOut } = useAuth();
@@ -78,11 +78,18 @@ const HomePage: React.FC = () => {
       // Optimistically update UI to prevent double-clicks
       setCompletedToday(prev => new Set([...prev, workoutId]));
       
-      const success = await completeWorkout(workoutId);
-      if (success) {
+      const result = await completeWorkout(workoutId);
+      if (result.success) {
+        let message = 'Workout completed!';
+        
+        // Add level up message if applicable
+        if (result.levelInfo?.levelUp) {
+          message += ` 🎉 Level up to ${result.levelInfo.currentLevel}!`;
+        }
+        
         setToastState({
           show: true,
-          message: 'Workout completed!',
+          message,
           points: workout.points
         });
         // The BackendDataContext already handles updating workoutHistory immediately
@@ -134,7 +141,8 @@ const HomePage: React.FC = () => {
         <div className="flex-1">
           <FilterTabs
             tabs={[
-              { key: "all", label: "All Workouts" },
+              { key: "all", label: "All" },
+              { key: "anywhere", label: "Anywhere" },
               { key: "outdoor", label: "Outdoor" },
               { key: "indoor", label: "Indoor" }
             ]}
@@ -172,7 +180,19 @@ const HomePage: React.FC = () => {
               <div className="flex items-center gap-8">
                 <div className="text-3xl">{workout.icon}</div>
                 <div className="flex-1">
-                  <h3 className="text-white text-lg">{workout.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-white text-lg">{workout.name}</h3>
+                    {workout.level && (
+                      <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full font-medium">
+                        L{workout.level}
+                      </span>
+                    )}
+                    {!workout.isCurrentLevel && (
+                      <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full font-medium">
+                        Easier
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center space-x-3 mt-1">
                     <span className="text-slate-400 text-sm">
                       {workout.duration}
@@ -180,7 +200,17 @@ const HomePage: React.FC = () => {
                     <span className="text-amber-400 text-sm">
                       +{workout.points} pts
                     </span>
+                    {workout.category === 'anywhere' && (
+                      <span className="text-green-400 text-xs">
+                        📍 Anywhere
+                      </span>
+                    )}
                   </div>
+                  {workout.description && (
+                    <div className="text-slate-400 text-sm mt-1">
+                      {workout.description}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <Button
